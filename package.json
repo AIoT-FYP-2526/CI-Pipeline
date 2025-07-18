@@ -1,0 +1,29 @@
+{
+  "name": "ci-pipeline-reviewer-assignment",
+  "version": "1.0.0",
+  "description": "Automated random reviewer assignment for GitHub pull requests",
+  "main": "scripts/assign-reviewers.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node scripts/assign-reviewers.js"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.1.2",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "keywords": [
+    "github",
+    "ci",
+    "pull-request",
+    "reviewer",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "directories": {
+    "example": "examples"
+  }
+}

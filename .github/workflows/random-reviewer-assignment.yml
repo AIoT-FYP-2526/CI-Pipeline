@@ -1,0 +1,96 @@
+name: Random Reviewer Assignment
+
+on:
+  workflow_call:
+    inputs:
+      reviewer_pool_file:
+        description: 'Path to the reviewer pool configuration file'
+        required: false
+        type: string
+        default: '.github/reviewers.yml'
+      num_reviewers:
+        description: 'Number of reviewers to assign'
+        required: false
+        type: number
+        default: 2
+      exclude_author:
+        description: 'Exclude PR author from reviewer selection'
+        required: false
+        type: boolean
+        default: true
+      team_reviewers:
+        description: 'Enable team-based reviewer assignment'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+
+jobs:
+  assign-reviewers:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Checkout CI Pipeline repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/CI-Pipeline
+          path: ci-pipeline
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ci-pipeline/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd ci-pipeline
+          npm ci
+
+      - name: Run reviewer assignment script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          REPOSITORY: ${{ github.repository }}
+          REVIEWER_POOL_FILE: ${{ inputs.reviewer_pool_file }}
+          NUM_REVIEWERS: ${{ inputs.num_reviewers }}
+          EXCLUDE_AUTHOR: ${{ inputs.exclude_author }}
+          TEAM_REVIEWERS: ${{ inputs.team_reviewers }}
+        run: |
+          cd ci-pipeline
+          node scripts/assign-reviewers.js
+
+      - name: Comment on PR
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = './ci-pipeline/assignment-result.json';
+            
+            if (fs.existsSync(path)) {
+              const result = JSON.parse(fs.readFileSync(path, 'utf8'));
+              
+              if (result.success && result.assignedReviewers.length > 0) {
+                const reviewerList = result.assignedReviewers.map(r => `@${r}`).join(', ');
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: `🎯 **Random Reviewer Assignment**\n\nAutomatically assigned reviewers: ${reviewerList}\n\n_This assignment was made using the organization's CI Pipeline._`
+                });
+              }
+            }

@@ -1,0 +1,38 @@
+# Example reviewer configuration
+# This file should be placed in each repository at .github/reviewers.yml
+
+reviewers:
+  # Individual reviewers (GitHub usernames)
+  default:
+    - alice
+    - bob
+    - charlie
+    - diana
+    - eve
+  
+  # GitHub teams (team slugs, only works if team_reviewers is enabled)
+  teams:
+    - backend-team
+    - frontend-team
+    - security-team
+
+# Assignment rules
+rules:
+  exclude_author: true      # Don't assign the PR author as a reviewer
+  min_reviewers: 1         # Minimum number of reviewers to assign
+  max_reviewers: 3         # Maximum number of reviewers to assign
+
+# Optional: Path-based reviewer assignment
+# path_based:
+#   - paths:
+#       - "src/backend/**"
+#       - "api/**"
+#     reviewers:
+#       - backend-alice
+#       - backend-bob
+#   - paths:
+#       - "src/frontend/**"
+#       - "ui/**"
+#     reviewers:
+#       - frontend-charlie
+#       - frontend-diana
