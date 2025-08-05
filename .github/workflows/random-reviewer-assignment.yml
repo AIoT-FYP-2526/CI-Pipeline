@@ -7,11 +7,14 @@ on:
         description: 'JSON array of reviewer usernames'
         required: false
         type: string
-        default: '["username1", "username2", "username3"]'
+        default: '["Lyam-T", "choiak", "sunnyhyw1225", "SimonSinon"]'
 
 jobs:
   assign-reviewer:
-    runs-on: ubuntu-latest 12
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
     
     steps:
     - name: Auto assign reviewer
